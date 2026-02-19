@@ -7,6 +7,7 @@ idf_component_register(
         "src/us_sensor.cpp"
     INCLUDE_DIRS
         "include"
+        "include/interfaces"
     REQUIRES
         driver
         esp_timer

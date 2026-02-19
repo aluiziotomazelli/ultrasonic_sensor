@@ -60,14 +60,12 @@ You can generate code coverage reports (in `.info` format) using `lcov`.
 
 2. Run the coverage target:
    ```bash
-   # from the root test directory
-   ninja -C build generate_coverage
+   # Using idf.py (simplest)
+   idf.py build generate_coverage
 
-   # or from the build directory
-   cd build
-   ninja generate_coverage
+   # Or using cmake/ninja directly from the test project directory
+   cmake --build build --target generate_coverage
    ```
-   *Note: You can also run it via idf.py: `idf.py build generate_coverage`.*
 
 This will:
 - Clean up old `.gcda` files and previous reports.
@@ -82,27 +80,27 @@ For production readiness or CI/CD, you can run all tests and generate a single u
 
 ### Running All Tests with CTest
 
-1. Ensure all tests are built:
+1. Configure and build all tests:
    ```bash
    cd host_test
-   mkdir -p build && cd build
-   cmake ..
-   cmake --build . --target build_all_tests
+   cmake -B build -S .
+   cmake --build build --target build_all_tests
    ```
 
 2. Run all tests:
    ```bash
+   cd host_test/build
    ctest
    ```
 
 ### Unified Coverage Report
 
-After running the tests (either individually or via `ctest`), you can generate a consolidated report:
+After running the tests (either individually or via `ctest`), you can generate a consolidated report without entering the build directory:
 
 1. Generate the unified report:
    ```bash
-   # From the host_test/build directory
-   cmake --build . --target unified_coverage
+   # From the host_test directory
+   cmake --build build --target unified_coverage
    ```
 
 This will search for coverage data across all test build directories and generate a combined report in `host_test/coverage/`.
