@@ -1,3 +1,5 @@
+// LCOV_EXCL_START
+// Por ser HAL de componentes do driver, nao faz sentido testá-las em host
 #include "us_gpio_hal.hpp"
 #include "driver/gpio.h"
 
@@ -32,3 +34,4 @@ esp_err_t GpioHAL::set_drive_capability(gpio_num_t gpio_num, gpio_drive_cap_t st
 {
     return gpio_set_drive_capability(gpio_num, strength);
 }
+// LCOV_EXCL_STOP

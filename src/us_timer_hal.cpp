@@ -1,3 +1,5 @@
+// LCOV_EXCL_START
+// Por ser HAL de componentes do driver, nao faz sentido testá-las em host
 #include "us_timer_hal.hpp"
 #include "esp_rom_sys.h"
 #include "esp_timer.h"
@@ -20,3 +22,4 @@ esp_err_t TimerHAL::delay_ms(uint32_t ms)
     vTaskDelay(pdMS_TO_TICKS(ms));
     return ESP_OK;
 }
+// LCOV_EXCL_STOP

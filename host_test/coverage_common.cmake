@@ -22,6 +22,7 @@ macro(setup_gtest_coverage PROJECT_NAME EXECUTABLE_NAME)
             COMMAND ./${EXECUTABLE_NAME}
             COMMAND ${LCOV_PATH} --capture --directory . --output-file coverage.info --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch,inconsistent
             COMMAND ${LCOV_PATH} --extract coverage.info "*/ultrasonic_sensor/src/*" "*/ultrasonic_sensor/include/*" --output-file coverage_filtered.info --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused,empty
+            COMMAND ${LCOV_PATH} --remove coverage_filtered.info "*/ultrasonic_sensor/include/interfaces/*" --output-file coverage_filtered.info --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused,empty
             COMMAND ${GENHTML_PATH} coverage_filtered.info --output-directory ${COVERAGE_DIR} --title "${PROJECT_NAME} Component Coverage" --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused
             COMMAND ${LCOV_PATH} --list coverage_filtered.info --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused,empty
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

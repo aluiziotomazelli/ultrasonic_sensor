@@ -25,6 +25,7 @@ set(UNIFIED_COVERAGE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coverage")
 add_custom_target(unified_coverage
     COMMAND ${LCOV_PATH} --capture --directory .. --output-file unified_coverage.info --rc branch_coverage=1 --rc geninfo_unexecuted_blocks=1 --ignore-errors mismatch,inconsistent
     COMMAND ${LCOV_PATH} --extract unified_coverage.info "*/ultrasonic_sensor/src/*" "*/ultrasonic_sensor/include/*" --output-file unified_coverage_filtered.info --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused,empty
+    COMMAND ${LCOV_PATH} --remove unified_coverage_filtered.info "*/ultrasonic_sensor/include/interfaces/*" --output-file unified_coverage_filtered.info --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused,empty
     COMMAND ${GENHTML_PATH} unified_coverage_filtered.info --output-directory ${UNIFIED_COVERAGE_DIR} --title "Ultrasonic Sensor Unified Coverage" --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused
     COMMAND ${LCOV_PATH} --list unified_coverage_filtered.info --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused,empty
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
