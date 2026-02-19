@@ -76,6 +76,41 @@ This will:
 - Generate an HTML report in the `coverage/` directory at the test directory root.
 - Print a summary to the console.
 
+## Unified Testing and Coverage (All Tests)
+
+For production readiness or CI/CD, you can run all tests and generate a single unified coverage report.
+
+### Running All Tests with CTest
+
+1. Ensure all tests are built:
+   ```bash
+   cd host_test
+   mkdir -p build && cd build
+   cmake ..
+   cmake --build . --target build_all_tests
+   ```
+
+2. Run all tests:
+   ```bash
+   ctest
+   ```
+
+### Unified Coverage Report
+
+After running the tests (either individually or via `ctest`), you can generate a consolidated report:
+
+1. Generate the unified report:
+   ```bash
+   # From the host_test/build directory
+   cmake --build . --target unified_coverage
+   ```
+
+This will search for coverage data across all test build directories and generate a combined report in `host_test/coverage/`.
+
+## Shared Coverage Logic
+
+The coverage logic is centralized in `host_test/coverage_common.cmake`. Individual test projects include this file to maintain consistency and reduce duplication.
+
 ## Why FetchContent?
 
 - **Clean Repo**: No need to store thousands of lines of external code.
