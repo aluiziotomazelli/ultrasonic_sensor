@@ -21,7 +21,9 @@ This component's `CMakeLists.txt` is responsible for:
 
 - ESP-IDF environment set up and sourced.
 - A Linux host machine (or WSL).
-- The project root directory must be named `power_control` (or you must ensure the component name is correctly resolved by the build system).
+- The project root directory must be named `ultrasonic_sensor`. 
+  - Idf build system uses "Preset Component Variables" that are available for use, but should not be modified: 
+  `COMPONENT_NAME`: Name of the component. Same as the name of the component directory.
 
 ### Execution Steps
 
@@ -60,7 +62,7 @@ You can generate code coverage reports (in `.info` format) using `lcov`.
    ```bash
    # from the root test directory
    ninja -C build generate_coverage
-      
+
    # or from the build directory
    cd build
    ninja generate_coverage
