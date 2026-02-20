@@ -15,7 +15,7 @@ public:
     ~UsProcessor() override = default;
 
     /** @copydoc IUsProcessor::process() */
-    Reading process(const float *raw_distances, uint8_t count, uint8_t total_pings, const UsConfig &cfg) override;
+    Reading process(const Reading *pings, uint8_t total_pings, const UsConfig &cfg) override;
 
 private:
     /** @brief Selects the median value from a series of measurements. */

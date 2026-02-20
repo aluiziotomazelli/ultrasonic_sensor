@@ -19,13 +19,12 @@ public:
     virtual ~IUsProcessor() = default;
 
     /**
-     * @brief Processes an array of valid distance samples.
+     * @brief Processes an array of ping results.
      *
-     * @param raw_distances Array of valid distance samples (cm).
-     * @param count         Number of valid samples in the array.
-     * @param total_pings   Total pings attempted (used to compute valid ratio).
-     * @param cfg           Configuration with variance and filter thresholds.
-     * @return PingResult with unified UsResult and filtered distance.
+     * @param pings       Array of Reading structures from driver pings.
+     * @param total_pings Total pings attempted (used to compute valid ratio).
+     * @param cfg         Configuration with variance and filter thresholds.
+     * @return Reading with unified UsResult and filtered distance.
      */
-    virtual Reading process(const float *raw_distances, uint8_t count, uint8_t total_pings, const UsConfig &cfg) = 0;
+    virtual Reading process(const Reading *pings, uint8_t total_pings, const UsConfig &cfg) = 0;
 };
