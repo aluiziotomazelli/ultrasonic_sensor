@@ -267,6 +267,32 @@ TEST_F(UsSensorTest, TIMEOUT_Failure)
     ASSERT_EQ(result, processed_reading);
 }
 
+TEST_F(UsSensorTest, InsufficientSamplesRefinedToOutOfRange)
+{
+    Reading driver_reading = {UsResult::OUT_OF_RANGE, 0.0f};
+    Reading processor_result = {UsResult::INSUFFICIENT_SAMPLES, 0.0f};
+    Reading expected_final = {UsResult::OUT_OF_RANGE, 0.0f};
+
+    EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
+    EXPECT_CALL(*processor, process(_, 0, 5, _)).WillOnce(Return(processor_result));
+
+    auto result = sensor->read_distance(5);
+    ASSERT_EQ(result, expected_final);
+}
+
+TEST_F(UsSensorTest, InsufficientSamplesRefinedToTimeout)
+{
+    Reading driver_reading = {UsResult::TIMEOUT, 0.0f};
+    Reading processor_result = {UsResult::INSUFFICIENT_SAMPLES, 0.0f};
+    Reading expected_final = {UsResult::TIMEOUT, 0.0f};
+
+    EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
+    EXPECT_CALL(*processor, process(_, 0, 5, _)).WillOnce(Return(processor_result));
+
+    auto result = sensor->read_distance(5);
+    ASSERT_EQ(result, expected_final);
+}
+
 TEST(UsSensorIntegrationTest, FactoryConstructorCreatesRealObjects)
 {
     UsConfig cfg;

@@ -47,6 +47,8 @@ Reading UsSensor::read_distance(uint8_t ping_count)
 
     float samples[MAX_PINGS];
     uint8_t count = 0;
+    uint8_t timeouts = 0;
+    uint8_t out_of_range = 0;
 
     for (uint8_t i = 0; i < ping_count; i++) {
         Reading raw = driver_->ping_once(cfg_);
@@ -63,6 +65,12 @@ Reading UsSensor::read_distance(uint8_t ping_count)
         }
         else {
             ESP_LOGD(TAG, "Ping %d discarded: result=%d", i, static_cast<int>(raw.result));
+            if (raw.result == UsResult::TIMEOUT) {
+                timeouts++;
+            }
+            else if (raw.result == UsResult::OUT_OF_RANGE) {
+                out_of_range++;
+            }
         }
 
         // Note: inter-ping delay (cfg_.ping_interval_ms) is applied inside UsDriver::ping_once()
@@ -70,5 +78,16 @@ Reading UsSensor::read_distance(uint8_t ping_count)
 
     // Delegate statistical processing to the processor
     auto result = processor_->process(samples, count, ping_count, cfg_);
+
+    // If processing failed due to lack of samples, refine the error based on what happened during pings
+    if (result.result == UsResult::INSUFFICIENT_SAMPLES) {
+        if (out_of_range >= timeouts && out_of_range > 0) {
+            return {UsResult::OUT_OF_RANGE, 0.0f};
+        }
+        if (timeouts > 0) {
+            return {UsResult::TIMEOUT, 0.0f};
+        }
+    }
+
     return {result.result, result.cm};
 }
