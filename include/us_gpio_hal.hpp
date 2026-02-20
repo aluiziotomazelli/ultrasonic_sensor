@@ -1,3 +1,5 @@
+// LCOV_EXCL_START
+// Since these are HAL components for the driver, it doesn't make sense to test them on host
 #pragma once
 
 #include "i_us_gpio_hal.hpp"
@@ -31,3 +33,4 @@ public:
     /** @copydoc IGpioHAL::set_drive_capability() */
     esp_err_t set_drive_capability(const gpio_num_t gpio_num, gpio_drive_cap_t strength) override;
 };
+// LCOV_EXCL_STOP

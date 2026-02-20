@@ -4,6 +4,7 @@
 #include "esp_err.h"
 
 #include "i_us_driver.hpp"
+#include "us_processor.hpp"
 #include "us_sensor.hpp"
 #include "us_types.hpp"
 

@@ -1,5 +1,5 @@
 // LCOV_EXCL_START
-// Por ser HAL de componentes do driver, nao faz sentido testá-las em host
+// Since these are HAL components for the driver, it doesn't make sense to test them on host
 #include "us_timer_hal.hpp"
 #include "esp_rom_sys.h"
 #include "esp_timer.h"

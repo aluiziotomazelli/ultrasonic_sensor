@@ -1,5 +1,5 @@
 // LCOV_EXCL_START
-// Por ser HAL de componentes do driver, nao faz sentido testá-las em host
+// Since these are HAL components for the driver, it doesn't make sense to test them on host
 #include "us_gpio_hal.hpp"
 #include "driver/gpio.h"
 
