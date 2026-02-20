@@ -1,7 +1,7 @@
 # Ultrasonic Sensor Component
 
 [![ESP-IDF Build](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml)
-[![Host tests](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml)
+[![Host tests](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml)
 
 A robust, test-driven ESP-IDF component for HC-SR04 and similar ultrasonic sensors. Designed for high reliability in real-world conditions, featuring advanced error handling and a clean, decoupled architecture.
 
@@ -9,15 +9,43 @@ A robust, test-driven ESP-IDF component for HC-SR04 and similar ultrasonic senso
 
 This component provides a high-level C++ interface to measure distances using ultrasonic sensors. It goes beyond simple pulse timing by incorporating statistical filtering and specific hardware fault detections learned from bench testing.
 
+#### Supported Sensors
+- RCWL--1655 and JSN-SR04T (waterproof, single transducer)
+- HC-SR04 (dual transducer)
+- Any HC-SR04-compatible ultrasonic sensor
+
+## Features
+
+- **Hardware Abstraction Layer**: Clean separation between hardware and logic layers
+- **Statistical Filtering**: Median and dominant cluster algorithms to handle noise and outliers
+- **Comprehensive Error Handling**: Distinguishes hardware failures from logical errors for proper recovery
+- **Extensively Tested**: Unit and integration tests with high coverage running on Linux host
+- **Well Documented**: Complete API reference and usage examples
+
 ## Architecture
 
 The project follows solid design principles to ensure maintainability and testability:
 - **Dependency Injection**: All hardware dependencies (GPIO, Timers) are injected via interfaces.
 - **Interface-Based Design**: Core logic is decoupled from hardware implementation, allowing for easy mocking.
 - **Separation of Concerns**:
-  - `UsDriver`: Handles low-level pulse triggering and echo timing.
-  - `UsProcessor`: Responsible for statistical analysis and error refinement.
   - `UsSensor`: The public orchestrator that provides the final distance.
+    - Manages ping loop
+    - Coordinates driver and processor
+    
+  - `UsDriver`: Handles low-level pulse triggering and echo timing.
+    - GPIO protocol (trigger/echo)
+    - Timing measurements
+    - Hardware error detection
+
+  - `UsProcessor`: Responsible for statistical analysis and error refinement.
+    - Filters valid samples
+    - Calculates variance
+    - Applies median/cluster algorithms
+    - Error detection and refinement
+  - HAL: Hardware Abstraction Layer
+    - `IGpioHAL`, `ITimerHAL` interfaces
+    - Enables testing without hardware
+
 
 ## Usage
 
@@ -52,10 +80,12 @@ Bench testing with real hardware revealed several edge cases that this component
 
 ## Testing
 
-Reliability is ensured through:
+The component includes comprehensive unit and integration tests that run on Linux host (no hardware required). The tests cover all edge cases and error states. Reliability is ensured through:
 - **Host-based Testing**: Unit tests run on Linux using Google Test and Google Mock.
 - **High Coverage**: Comprehensive test suite covering edge cases and error states.
 - **CI Pipeline**: Automated builds and tests for every push.
+
+The tests are located in the [host_test](host_test) directory, with a [README](host_test/README.md) file that explains how to run them.
 
 ## API Reference
 
@@ -63,7 +93,7 @@ Detailed documentation for all classes and methods can be found in [API.md](API.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Author
 
