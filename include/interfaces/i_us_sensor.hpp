@@ -1,15 +1,14 @@
 #pragma once
 
 #include "esp_err.h"
-#include "i_us_driver.hpp"
 #include "us_types.hpp"
 
 /**
- * @interface IUltrasonicSensor
  * @brief Public interface for the ultrasonic sensor orchestrator.
  *
- * Orchestrates multiple pings via IUsDriver, applies statistical processing
- * via IUsProcessor, and returns a unified result.
+ * This class defines the high-level API for interacting with the ultrasonic sensor.
+ * It is responsible for orchestrating multiple pings, applying statistical filters
+ * to the samples, and returning a reliable distance measurement.
  */
 class IUsSensor
 {
@@ -17,31 +16,43 @@ public:
     virtual ~IUsSensor() = default;
 
     /**
-     * @brief Initializes the sensor hardware.
-     * Must be called before read_distance(). Allows the chip to stabilize
-     * before touching GPIO pins.
+     * @brief Initialize the ultrasonic sensor component.
+     *
+     * This method configures the necessary GPIOs and prepares the sensor for measurements.
+     * It may also include a warmup period to allow the sensor hardware to stabilize.
+     *
+     * @return
+     *     - ESP_OK: Success
+     *     - Other: error codes propagated from the underlying driver HAL implementation
      */
     virtual esp_err_t init() = 0;
 
     /**
-     * @brief Deinitializes the sensor hardware and resets pins to a safe state.
+     * @brief Deinitialize the ultrasonic sensor component.
+     *
+     * This method releases any resources used by the sensor and resets GPIO pins
+     * to a safe state.
+     *
+     * @return
+     *     - ESP_OK: Success
+     *     - Other: error codes propagated from the underlying driver HAL implementation
      */
     virtual esp_err_t deinit() = 0;
 
     /**
-     * @brief Performs a distance measurement using multiple pings.
+     * @brief Perform a distance measurement using multiple pings.
      *
-     * Hardware failures (ECHO_STUCK, HW_FAULT) abort the ping loop immediately.
-     * Logical failures (TIMEOUT, OUT_OF_RANGE) discard the ping and continue.
+     * This method triggers the sensor multiple times, collects the results, and
+     * processes them using the configured statistical filter.
      *
-     * @param ping_count Number of pings to attempt. Caller can vary this at
-     *                   runtime based on quality or error conditions.
-     * @return Reading with unified UsResult and distance in cm.
+     * @param ping_count Number of pings to attempt (limited by IUsProcessor::MAX_PINGS).
      *
-     * Usage:
-     *   auto r = sensor.read_distance(7);
-     *   if (is_success(r.result)) { use(r.cm); }
-     *   else if (r.result == UsResult::ECHO_STUCK) { power_cycle(); }
+     * @return Reading structure containing the unified UsResult and the filtered
+     *         distance in centimeters.
+     *
+     * @note Logical failures (TIMEOUT, OUT_OF_RANGE) for individual pings are handled
+     *       internally. If the final result is INSUFFICIENT_SAMPLES, it may be
+     *       refined to the most frequent logical error encountered.
      */
     virtual Reading read_distance(uint8_t ping_count) = 0;
 };

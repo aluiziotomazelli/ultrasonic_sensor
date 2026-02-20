@@ -5,12 +5,13 @@
 #include <cstddef>
 
 /**
- * @class UsProcessor
  * @brief Concrete implementation of IUsProcessor for statistical filtering of ultrasonic samples.
+ * @internal
  */
 class UsProcessor : public IUsProcessor
 {
 public:
+    /** @internal */
     UsProcessor() = default;
     ~UsProcessor() override = default;
 
@@ -18,12 +19,12 @@ public:
     Reading process(const Reading *pings, uint8_t total_pings, const UsConfig &cfg) override;
 
 private:
-    /** @brief Selects the median value from a series of measurements. */
+    /** @internal */
     float reduce_median(float *v, std::size_t n);
 
-    /** @brief Finds the most frequent cluster of values and returns its average. */
+    /** @internal */
     float reduce_dominant_cluster(float *v, std::size_t n);
 
-    /** @brief Calculates the standard deviation of valid measurements. */
+    /** @internal */
     float get_std_dev(const float *samples, uint8_t count);
 };

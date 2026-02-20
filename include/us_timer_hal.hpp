@@ -5,12 +5,13 @@
 #include "i_us_timer_hal.hpp"
 
 /**
- * @class TimerHAL
  * @brief Concrete implementation of ITimerHAL using ESP-IDF functions.
+ * @internal
  */
 class TimerHAL : public ITimerHAL
 {
 public:
+    /** @internal */
     TimerHAL() = default;
     ~TimerHAL() override = default;
 

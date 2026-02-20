@@ -5,13 +5,13 @@
 #include "i_us_gpio_hal.hpp"
 
 /**
- * @class GpioHAL
- * @brief Concrete implementation of IGpioHAL using ESP-IDF driver
+ * @brief Concrete implementation of IGpioHAL using ESP-IDF driver.
  * @internal
  */
 class GpioHAL : public IGpioHAL
 {
 public:
+    /** @internal */
     GpioHAL() = default;
     ~GpioHAL() override = default;
 
@@ -21,7 +21,7 @@ public:
     /** @copydoc IGpioHAL::config() */
     esp_err_t config(const gpio_config_t &config) override;
 
-    /** @copydoc IGpioHAL::set_level(const gpio_num_t pin, const bool level) */
+    /** @copydoc IGpioHAL::set_level() */
     esp_err_t set_level(const gpio_num_t pin, const bool level) override;
 
     /** @copydoc IGpioHAL::get_level() */

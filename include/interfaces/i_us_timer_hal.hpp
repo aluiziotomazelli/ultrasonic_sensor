@@ -4,26 +4,20 @@
 #include <cstdint>
 
 /**
- * @interface ITimerHAL
- * @brief Hardware Abstraction Layer for Timing and Delays
+ * @brief Hardware Abstraction Layer for Timing and Delays.
+ * @internal
  */
 class ITimerHAL
 {
 public:
     virtual ~ITimerHAL() = default;
 
-    /**
-     * @brief Gets current timestamp in microseconds.
-     */
+    /** @internal */
     virtual uint64_t get_now_us() = 0;
 
-    /**
-     * @brief Precise delay in microseconds.
-     */
+    /** @internal */
     virtual esp_err_t delay_us(uint32_t us) = 0;
 
-    /**
-     * @brief OS-friendly delay in milliseconds.
-     */
+    /** @internal */
     virtual esp_err_t delay_ms(uint32_t ms) = 0;
 };
