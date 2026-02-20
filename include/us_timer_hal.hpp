@@ -1,14 +1,17 @@
+// LCOV_EXCL_START
+// Since these are HAL components for the driver, it doesn't make sense to test them on host
 #pragma once
 
 #include "i_us_timer_hal.hpp"
 
 /**
- * @class TimerHAL
  * @brief Concrete implementation of ITimerHAL using ESP-IDF functions.
+ * @internal
  */
 class TimerHAL : public ITimerHAL
 {
 public:
+    /** @internal */
     TimerHAL() = default;
     ~TimerHAL() override = default;
 
@@ -21,3 +24,4 @@ public:
     /** @copydoc ITimerHAL::delay_ms() */
     esp_err_t delay_ms(uint32_t ms) override;
 };
+// LCOV_EXCL_STOP

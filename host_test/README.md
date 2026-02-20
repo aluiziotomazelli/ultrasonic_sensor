@@ -60,14 +60,12 @@ You can generate code coverage reports (in `.info` format) using `lcov`.
 
 2. Run the coverage target:
    ```bash
-   # from the root test directory
-   ninja -C build generate_coverage
+   # Using idf.py (simplest)
+   idf.py build generate_coverage
 
-   # or from the build directory
-   cd build
-   ninja generate_coverage
+   # Or using cmake/ninja directly from the test project directory
+   cmake --build build --target generate_coverage
    ```
-   *Note: You can also run it via idf.py: `idf.py build generate_coverage`.*
 
 This will:
 - Clean up old `.gcda` files and previous reports.
@@ -75,6 +73,41 @@ This will:
 - Capture coverage data and filter it to include only the component source files (src and include), excluding tests and external libraries.
 - Generate an HTML report in the `coverage/` directory at the test directory root.
 - Print a summary to the console.
+
+## Unified Testing and Coverage (All Tests)
+
+For production readiness or CI/CD, you can run all tests and generate a single unified coverage report.
+
+### Running All Tests with CTest
+
+1. Configure and build all tests:
+   ```bash
+   cd host_test
+   cmake -B build -S .
+   cmake --build build --target build_all_tests
+   ```
+
+2. Run all tests:
+   ```bash
+   cd host_test/build
+   ctest
+   ```
+
+### Unified Coverage Report
+
+After running the tests (either individually or via `ctest`), you can generate a consolidated report without entering the build directory:
+
+1. Generate the unified report:
+   ```bash
+   # From the host_test directory
+   cmake --build build --target unified_coverage
+   ```
+
+This will search for coverage data across all test build directories and generate a combined report in `host_test/coverage/`.
+
+## Shared Coverage Logic
+
+The coverage logic is centralized in `host_test/coverage_common.cmake`. Individual test projects include this file to maintain consistency and reduce duplication.
 
 ## Why FetchContent?
 

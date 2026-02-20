@@ -20,38 +20,64 @@ static constexpr float WEAK_VARIANCE_RATIO = 0.6f;
 static constexpr float CLUSTER_DELTA_CM = 5.0f; // max spread within a cluster
 static constexpr size_t CLUSTER_MIN_SIZE = 2;   // minimum cluster size to be considered
 
-Reading UsProcessor::process(const float *raw_distances, uint8_t count, uint8_t total_pings, const UsConfig &cfg)
+Reading UsProcessor::process(const Reading *pings, uint8_t total_pings, const UsConfig &cfg)
 {
-    // 1. Compute valid ping ratio
-    float ratio = (total_pings > 0) ? (static_cast<float>(count) / total_pings) : 0.0f;
-
-    // 2. Check minimum data threshold
-    if (ratio < INVALID_PING_RATIO) {
-        ESP_LOGD(TAG, "Insufficient samples: ratio=%.2f (need >= %.2f)", ratio, INVALID_PING_RATIO);
+    if (total_pings == 0) {
         return {UsResult::INSUFFICIENT_SAMPLES, 0.0f};
     }
 
-    // Copy to mutable array for sorting (count is bounded by MAX_PINGS)
     float samples[MAX_PINGS];
-    for (uint8_t i = 0; i < count; ++i) samples[i] = raw_distances[i];
+    uint8_t valid_count = 0;
+    uint8_t timeouts = 0;
+    uint8_t out_of_range = 0;
 
-    // 3. Check variance
-    float std_dev = get_std_dev(samples, count);
+    // 1. Extract valid samples and count specific errors
+    for (uint8_t i = 0; i < total_pings; i++) {
+        if (is_success(pings[i].result)) {
+            samples[valid_count++] = pings[i].cm;
+        }
+        else if (pings[i].result == UsResult::TIMEOUT) {
+            timeouts++;
+        }
+        else if (pings[i].result == UsResult::OUT_OF_RANGE) {
+            out_of_range++;
+        }
+    }
+
+    // 2. Compute valid ping ratio
+    float ratio = static_cast<float>(valid_count) / total_pings;
+
+    // 3. Check minimum data threshold
+    if (ratio < INVALID_PING_RATIO) {
+        ESP_LOGD(TAG, "Insufficient samples: ratio=%.2f (need >= %.2f)", ratio, INVALID_PING_RATIO);
+
+        // Refine the error based on what happened during pings
+        if (out_of_range >= timeouts && out_of_range > 0) {
+            return {UsResult::OUT_OF_RANGE, 0.0f};
+        }
+        if (timeouts > 0) {
+            return {UsResult::TIMEOUT, 0.0f};
+        }
+        return {UsResult::INSUFFICIENT_SAMPLES, 0.0f};
+    }
+
+    // 4. Check variance
+    float std_dev = get_std_dev(samples, valid_count);
     if (std_dev > cfg.max_dev_cm) {
         ESP_LOGD(TAG, "High variance: std_dev=%.2f cm (limit=%.2f cm)", std_dev, cfg.max_dev_cm);
         return {UsResult::HIGH_VARIANCE, 0.0f};
     }
 
-    // 4. Apply filter
+    // 5. Apply filter
     float distance_cm;
     if (cfg.filter == Filter::MEDIAN) {
-        distance_cm = reduce_median(samples, count);
+        distance_cm = reduce_median(samples, valid_count);
     }
     else {
-        distance_cm = reduce_dominant_cluster(samples, count);
+        distance_cm = reduce_dominant_cluster(samples, valid_count);
     }
 
-    // 5. Determine quality based on ping ratio
+    // 6. Determine quality based on ping ratio
     if (ratio >= VALID_PING_RATIO) {
         // Good ratio — check if variance is elevated (but still within limit)
         if (std_dev > cfg.max_dev_cm * WEAK_VARIANCE_RATIO) {

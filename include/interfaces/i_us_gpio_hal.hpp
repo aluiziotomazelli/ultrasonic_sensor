@@ -4,8 +4,7 @@
 #include "driver/gpio.h"
 
 /**
- * @interface IGpioHAL
- * @brief Hardware Abstraction Layer for GPIO operations
+ * @brief Hardware Abstraction Layer for GPIO operations.
  * @internal
  */
 class IGpioHAL

@@ -45,30 +45,25 @@ Reading UsSensor::read_distance(uint8_t ping_count)
         ping_count = (ping_count == 0) ? 1 : MAX_PINGS;
     }
 
-    float samples[MAX_PINGS];
-    uint8_t count = 0;
+    Reading pings[MAX_PINGS];
 
     for (uint8_t i = 0; i < ping_count; i++) {
-        Reading raw = driver_->ping_once(cfg_);
+        pings[i] = driver_->ping_once(cfg_);
 
         // Hardware failures abort the loop immediately — application must act
-        if (raw.result == UsResult::ECHO_STUCK || raw.result == UsResult::HW_FAULT) {
-            ESP_LOGE(TAG, "Hardware failure on ping %d: %d — aborting", i, static_cast<int>(raw.result));
-            return raw;
+        if (pings[i].result == UsResult::ECHO_STUCK || pings[i].result == UsResult::HW_FAULT) {
+            ESP_LOGE(TAG, "Hardware failure on ping %d: %d — aborting", i, static_cast<int>(pings[i].result));
+            return pings[i];
         }
 
-        // Logical failures (TIMEOUT, OUT_OF_RANGE) discard the ping and continue
-        if (is_success(raw.result)) {
-            samples[count++] = raw.cm;
-        }
-        else {
-            ESP_LOGD(TAG, "Ping %d discarded: result=%d", i, static_cast<int>(raw.result));
+        // Logical failures (TIMEOUT, OUT_OF_RANGE) are collected and passed to processor
+        if (!is_success(pings[i].result)) {
+            ESP_LOGD(TAG, "Ping %d failed: result=%d", i, static_cast<int>(pings[i].result));
         }
 
         // Note: inter-ping delay (cfg_.ping_interval_ms) is applied inside UsDriver::ping_once()
     }
 
-    // Delegate statistical processing to the processor
-    auto result = processor_->process(samples, count, ping_count, cfg_);
-    return {result.result, result.cm};
+    // Delegate processing (including logical error refinement) to the processor
+    return processor_->process(pings, ping_count, cfg_);
 }
