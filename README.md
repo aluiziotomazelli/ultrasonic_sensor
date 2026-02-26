@@ -3,6 +3,9 @@
 [![ESP-IDF Build](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml)
 [![Host tests](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml)
 
+[![Coverage Report](https://img.shields.io/badge/coverage-report-blue)](https://aluiziotomazelli.github.io/ultrasonic_sensor/coverage/index.html)
+
+
 A robust, test-driven ESP-IDF component for HC-SR04 and similar ultrasonic sensors. Designed for high reliability in real-world conditions, featuring advanced error handling and a clean, decoupled architecture.
 
 ## Overview
@@ -79,6 +82,11 @@ Bench testing with real hardware revealed several edge cases that this component
 - **OUT_OF_RANGE**: Sensor responded, but the object is outside the physically reliable measurement range.
 
 ## Testing
+
+### [Tests Report](https://aluiziotomazelli.github.io/ultrasonic_sensor/) 
+
+[![Coverage Report](https://img.shields.io/badge/coverage-report-blue)](https://aluiziotomazelli.github.io/ultrasonic_sensor/coverage/index.html)
+
 
 The component includes comprehensive unit and integration tests that run on Linux host (no hardware required). The tests cover all edge cases and error states. Reliability is ensured through:
 - **Host-based Testing**: Unit tests run on Linux using Google Test and Google Mock.
