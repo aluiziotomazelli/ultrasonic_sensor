@@ -1,0 +1,1 @@
+genhtml unified_coverage_filtered.info --output-directory /home/german/dev/workspaces/idf-components/ultrasonic_sensor/host_test/coverage --title 'Ultrasonic Sensor Unified Coverage' --rc branch_coverage=1 --ignore-errors mismatch,inconsistent,unused
