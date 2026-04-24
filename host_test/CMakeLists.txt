@@ -42,12 +42,6 @@ add_custom_target(coverage_clean
 
 # Helper target to build all tests at once (requires idf.py to be in your PATH)
 add_custom_target(build_all_tests
-    COMMAND idf.py -C ../test_floatswitch build
-    COMMENT "Building all test projects using idf.py"
-)
-
-# Helper target to build all tests at once (requires idf.py to be in your PATH)
-add_custom_target(build_all_tests
     COMMAND idf.py -C ../test_us_driver build
     COMMAND idf.py -C ../test_us_processor build
     COMMAND idf.py -C ../test_us_sensor build
