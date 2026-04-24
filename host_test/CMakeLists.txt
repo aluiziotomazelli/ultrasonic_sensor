@@ -32,6 +32,20 @@ add_custom_target(unified_coverage
     COMMENT "Generating unified coverage report from all host tests"
 )
 
+# Added cleanup target to manually clear previous results if needed
+add_custom_target(coverage_clean
+    COMMAND find . -name "*.gcda" -delete
+    COMMAND ${CMAKE_COMMAND} -E rm -rf ${UNIFIED_COVERAGE_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Cleaning up coverage data"
+)
+
+# Helper target to build all tests at once (requires idf.py to be in your PATH)
+add_custom_target(build_all_tests
+    COMMAND idf.py -C ../test_floatswitch build
+    COMMENT "Building all test projects using idf.py"
+)
+
 # Helper target to build all tests at once (requires idf.py to be in your PATH)
 add_custom_target(build_all_tests
     COMMAND idf.py -C ../test_us_driver build
