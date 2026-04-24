@@ -3,6 +3,8 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
+namespace ultrasonic {
+
 static const char *TAG = "UsDriver";
 
 UsDriver::UsDriver(
@@ -214,3 +216,5 @@ esp_err_t UsDriver::measure_pulse(uint32_t timeout_us, uint32_t &duration_us)
     duration_us = static_cast<uint32_t>(echo_end - echo_start);
     return ESP_OK;
 }
+
+} // namespace ultrasonic

@@ -4,6 +4,8 @@
 #include <vector>
 #include "gtest/gtest.h"
 
+using namespace ultrasonic;
+
 TEST(UsProcessorTest, MedianFilter)
 {
     UsProcessor processor;

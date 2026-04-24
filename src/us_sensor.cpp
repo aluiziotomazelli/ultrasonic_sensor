@@ -8,6 +8,8 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
+namespace ultrasonic {
+
 static const char *TAG = "UsSensor";
 
 // Production constructor: creates concrete HALs and driver internally
@@ -67,3 +69,5 @@ Reading UsSensor::read_distance(uint8_t ping_count)
     // Delegate processing (including logical error refinement) to the processor
     return processor_->process(pings, ping_count, cfg_);
 }
+
+} // namespace ultrasonic

@@ -4,6 +4,7 @@
 
 extern "C" void app_main(void)
 {
+    using namespace ultrasonic;
     ESP_LOGI("main", "Testing component compilation");
 
     UsConfig cfg = {};

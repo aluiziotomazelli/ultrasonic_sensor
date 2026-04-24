@@ -23,6 +23,7 @@ static const char *TAG = "ULTRASONIC_EXAMPLE";
 
 extern "C" void app_main(void)
 {
+    using namespace ultrasonic;
     /**
      * Hardware Configurations for RCWL-1655 sensor
      * This is a waterproof sensor and has some specific characteristics

@@ -10,6 +10,7 @@
 #include "us_driver.hpp"
 #include "us_types.hpp"
 
+using namespace ultrasonic;
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::InSequence;

@@ -4,6 +4,8 @@
 #include "us_types.hpp"
 #include "driver/gpio.h"
 
+namespace ultrasonic {
+
 /**
  * @brief Interface for the low-level ultrasonic hardware driver.
  * @internal
@@ -24,3 +26,5 @@ public:
     /** @internal */
     virtual Reading ping_once(const UsConfig &cfg) = 0;
 };
+
+} // namespace ultrasonic

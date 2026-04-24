@@ -3,6 +3,8 @@
 #include "us_types.hpp"
 #include <cstdint>
 
+namespace ultrasonic {
+
 /**
  * @brief Interface for processing multiple ultrasonic ping samples into a final result.
  * @internal
@@ -20,3 +22,5 @@ public:
     /** @internal */
     virtual Reading process(const Reading *pings, uint8_t total_pings, const UsConfig &cfg) = 0;
 };
+
+} // namespace ultrasonic

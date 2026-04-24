@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdint>
 
+namespace ultrasonic {
+
 /**
  * @brief Unified result type for all ultrasonic sensor operations.
  */
@@ -75,3 +77,5 @@ struct UsConfig
     float max_dev_cm = 15.0f;       /**< Max standard deviation for OK result (cm). */
     uint16_t warmup_time_ms = 600;  /**< Time to wait after init before first ping (ms). */
 };
+
+} // namespace ultrasonic

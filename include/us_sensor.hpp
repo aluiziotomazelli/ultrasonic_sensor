@@ -7,6 +7,8 @@
 #include "i_us_sensor.hpp"
 #include "us_types.hpp"
 
+namespace ultrasonic {
+
 /**
  * @brief Concrete implementation of IUsSensor.
  *
@@ -66,3 +68,5 @@ private:
     /** @internal */
     static constexpr uint8_t MAX_PINGS = 15;
 };
+
+} // namespace ultrasonic

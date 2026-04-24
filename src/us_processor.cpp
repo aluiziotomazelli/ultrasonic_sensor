@@ -7,6 +7,8 @@
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
+namespace ultrasonic {
+
 static const char *TAG = "UsProcessor";
 
 // Ratio thresholds for ping validity
@@ -143,3 +145,5 @@ float UsProcessor::get_std_dev(const float *samples, uint8_t count)
     for (uint8_t i = 0; i < count; i++) variance += std::pow(samples[i] - mean, 2);
     return std::sqrt(variance / count);
 }
+
+} // namespace ultrasonic

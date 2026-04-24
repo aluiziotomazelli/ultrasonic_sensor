@@ -7,6 +7,8 @@
 #include "i_us_gpio_hal.hpp"
 #include "i_us_timer_hal.hpp"
 
+namespace ultrasonic {
+
 /**
  * @brief Concrete implementation of IUsDriver for HC-SR04-compatible sensors.
  * @internal
@@ -61,3 +63,5 @@ private:
     /** @internal */
     gpio_num_t echo_pin_;
 };
+
+} // namespace ultrasonic

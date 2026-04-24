@@ -1,9 +1,8 @@
 # Ultrasonic Sensor Component
 
 [![ESP-IDF Build](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/build.yml)
-[![Host tests](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml)
-
-[![Coverage Report](https://img.shields.io/badge/coverage-report-blue)](https://aluiziotomazelli.github.io/ultrasonic_sensor/coverage/index.html)
+[![Host Tests](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml/badge.svg)](https://github.com/aluiziotomazelli/ultrasonic_sensor/actions/workflows/host_test.yml)
+[![Coverage Report](https://img.shields.io/badge/coverage-report-blue)](https://aluiziotomazelli.github.io/ultrasonic_sensor/index.html)
 
 
 A robust, test-driven ESP-IDF component for HC-SR04 and similar ultrasonic sensors. Designed for high reliability in real-world conditions, featuring advanced error handling and a clean, decoupled architecture.
@@ -47,7 +46,8 @@ The project follows solid design principles to ensure maintainability and testab
     - Error detection and refinement
   - HAL: Hardware Abstraction Layer
     - `IGpioHAL`, `ITimerHAL` interfaces
-    - Enables testing without hardware
+    - Default implementations are inlined for maximum efficiency
+    - Enables testing without hardware via dependency injection
 
 
 ## Usage
@@ -55,17 +55,21 @@ The project follows solid design principles to ensure maintainability and testab
 ```cpp
 #include "us_sensor.hpp"
 
+using namespace ultrasonic;
+
 // Initialize with Echo and Trigger pins
 UsConfig cfg = {}; // Use default settings
 UsSensor sensor(GPIO_NUM_4, GPIO_NUM_5, cfg);
 
 sensor.init();
 
-// Read distance in centimeters (uses internal filtering)
-float distance = sensor.read_distance();
+// Read distance (performs 7 pings and applies statistical filtering)
+Reading reading = sensor.read_distance(7);
 
-if (distance > 0) {
-    printf("Distance: %.2f cm\n", distance);
+if (is_success(reading.result)) {
+    printf("Distance: %.2f cm\n", reading.cm);
+} else {
+    printf("Measurement failed with error code: %d\n", (int)reading.result);
 }
 ```
 *For complete implementation details, check the [examples/](examples/) folder.*

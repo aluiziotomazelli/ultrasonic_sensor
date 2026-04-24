@@ -3,6 +3,8 @@
 #include "esp_err.h"
 #include "us_types.hpp"
 
+namespace ultrasonic {
+
 /**
  * @brief Public interface for the ultrasonic sensor orchestrator.
  *
@@ -56,3 +58,5 @@ public:
      */
     virtual Reading read_distance(uint8_t ping_count) = 0;
 };
+
+} // namespace ultrasonic

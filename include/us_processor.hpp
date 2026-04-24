@@ -4,6 +4,8 @@
 #include "us_types.hpp"
 #include <cstddef>
 
+namespace ultrasonic {
+
 /**
  * @brief Concrete implementation of IUsProcessor for statistical filtering of ultrasonic samples.
  * @internal
@@ -28,3 +30,5 @@ private:
     /** @internal */
     float get_std_dev(const float *samples, uint8_t count);
 };
+
+} // namespace ultrasonic

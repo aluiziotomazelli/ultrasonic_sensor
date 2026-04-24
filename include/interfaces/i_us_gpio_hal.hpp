@@ -3,6 +3,8 @@
 #include "esp_err.h"
 #include "driver/gpio.h"
 
+namespace ultrasonic {
+
 /**
  * @brief Hardware Abstraction Layer for GPIO operations.
  * @internal
@@ -30,3 +32,5 @@ public:
     /** @internal */
     virtual esp_err_t set_drive_capability(const gpio_num_t gpio_num, gpio_drive_cap_t strength) = 0;
 };
+
+} // namespace ultrasonic

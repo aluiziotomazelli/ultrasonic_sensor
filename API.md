@@ -1,6 +1,6 @@
 # Ultrasonic Sensor Component API Reference
 
-This document provides a comprehensive reference for the public API of the `ultrasonic_sensor` component.
+This document provides a comprehensive reference for the public API of the `ultrasonic_sensor` component. All classes and types are located within the `ultrasonic` namespace.
 
 ## Public Interface
 

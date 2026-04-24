@@ -8,6 +8,7 @@
 #include "us_sensor.hpp"
 #include "us_types.hpp"
 
+using namespace ultrasonic;
 using ::testing::_;
 using ::testing::Return;
 

@@ -3,6 +3,8 @@
 #include "esp_err.h"
 #include <cstdint>
 
+namespace ultrasonic {
+
 /**
  * @brief Hardware Abstraction Layer for Timing and Delays.
  * @internal
@@ -21,3 +23,5 @@ public:
     /** @internal */
     virtual esp_err_t delay_ms(uint32_t ms) = 0;
 };
+
+} // namespace ultrasonic
