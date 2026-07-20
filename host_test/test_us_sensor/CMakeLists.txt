@@ -6,7 +6,7 @@ list(APPEND EXTRA_COMPONENT_DIRS
     "../gtest"                           # The GTest wrapper component
     "$ENV{IDF_PATH}/tools/mocks/driver"  # Official ESP-IDF driver mocks
     "$ENV{IDF_PATH}/tools/mocks/esp_timer" # esp_timer mocks
-    "../../.."                           # Sibling components (like idf_hals)
+    "../../external"                     # The 'idf_hals' component
 )
 
 # Explicitly list the components to be included in the build.

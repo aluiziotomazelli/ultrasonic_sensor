@@ -3,4 +3,5 @@ idf_component_register(
         "main.cpp"
     REQUIRES 
         ultrasonic_sensor
+        idf_hals
 )
