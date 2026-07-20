@@ -72,13 +72,20 @@ Reading UsSensor::read_distance(uint8_t ping_count)
     }
 
     Reading pings[MAX_PINGS];
+    char log_buf[128] = "";
+    int offset = 0;
 
     for (uint8_t i = 0; i < ping_count; i++) {
         pings[i] = driver_->ping_once(cfg_);
 
+        offset += snprintf(log_buf + offset, sizeof(log_buf) - offset, "%.1f-%d%s",
+                           pings[i].cm, static_cast<int>(pings[i].result),
+                           (i == ping_count - 1) ? "" : ", ");
+
         // Hardware failures abort the loop immediately — application must act
         if (pings[i].result == UsResult::ECHO_STUCK || pings[i].result == UsResult::HW_FAULT) {
             ESP_LOGE(TAG, "Hardware failure on ping %d: %d — aborting", i, static_cast<int>(pings[i].result));
+            ESP_LOGI(TAG, "UsSensor: %s (aborted)", log_buf);
             return pings[i];
         }
 
@@ -92,6 +99,8 @@ Reading UsSensor::read_distance(uint8_t ping_count)
             freertos_hal_.task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms));
         }
     }
+
+    ESP_LOGI(TAG, "UsSensor: %s", log_buf);
 
     // Delegate processing (including logical error refinement) to the processor
     return processor_->process(pings, ping_count, cfg_);
