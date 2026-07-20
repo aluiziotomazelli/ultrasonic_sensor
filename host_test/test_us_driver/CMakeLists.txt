@@ -6,10 +6,11 @@ list(APPEND EXTRA_COMPONENT_DIRS
     "../gtest"                           # The GTest wrapper component
     "$ENV{IDF_PATH}/tools/mocks/driver"  # Official ESP-IDF driver mocks
     "$ENV{IDF_PATH}/tools/mocks/esp_timer" # esp_timer mocks
+    "../../.."                           # Sibling components (like idf_hals)
 )
 
 # Explicitly list the components to be included in the build.
-set(COMPONENTS main ultrasonic_sensor)
+set(COMPONENTS main ultrasonic_sensor idf_hals)
 
 # Standard ESP-IDF project configuration.
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

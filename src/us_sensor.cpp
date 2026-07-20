@@ -1,37 +1,61 @@
+// components/ultrasonic_sensor/src/us_sensor.cpp
+
 #include "us_sensor.hpp"
-#include "us_driver.hpp"
-#include "us_gpio_hal.hpp"
-#include "us_processor.hpp"
-#include "us_timer_hal.hpp"
+
 #include <memory>
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 
+#include "us_driver.hpp"
+#include "us_processor.hpp"
+
 namespace ultrasonic {
 
 static const char *TAG = "UsSensor";
 
-// Production constructor: creates concrete HALs and driver internally
-UsSensor::UsSensor(gpio_num_t trig_pin, gpio_num_t echo_pin, const UsConfig &cfg)
+// Production constructor: creates concrete driver and processor internally
+UsSensor::UsSensor(
+    idf_hals::IGpioHAL &gpio_hal,
+    idf_hals::ITimerHAL &timer_hal,
+    idf_hals::ISysRomHAL &sys_rom_hal,
+    idf_hals::IHalFreertos &freertos_hal,
+    gpio_num_t trig_pin,
+    gpio_num_t echo_pin,
+    const UsConfig &cfg)
     : cfg_(cfg)
-    , driver_(std::make_shared<UsDriver>(std::make_shared<GpioHAL>(), std::make_shared<TimerHAL>(), trig_pin, echo_pin))
+    , driver_(std::make_shared<UsDriver>(gpio_hal, timer_hal, sys_rom_hal, trig_pin, echo_pin))
     , processor_(std::make_shared<UsProcessor>())
+    , freertos_hal_(freertos_hal)
 {
 }
 
 // Test constructor: receives dependencies via injection
-UsSensor::UsSensor(const UsConfig &cfg, std::shared_ptr<IUsDriver> driver, std::shared_ptr<IUsProcessor> processor)
+UsSensor::UsSensor(
+    const UsConfig &cfg,
+    std::shared_ptr<IUsDriver> driver,
+    std::shared_ptr<IUsProcessor> processor,
+    idf_hals::IHalFreertos &freertos_hal)
     : cfg_(cfg)
     , driver_(driver)
     , processor_(processor)
+    , freertos_hal_(freertos_hal)
 {
 }
 
 esp_err_t UsSensor::init()
 {
-    // Pass warmup_time_ms so the driver waits for sensor stabilization after GPIO setup
-    return driver_->init(cfg_.warmup_time_ms);
+    esp_err_t ret = driver_->init();
+    if (ret != ESP_OK) {
+        return ret;
+    }
+
+    if (cfg_.warmup_time_ms > 0) {
+        ESP_LOGD(TAG, "Warming up for %d ms", cfg_.warmup_time_ms);
+        freertos_hal_.task_delay(pdMS_TO_TICKS(cfg_.warmup_time_ms));
+    }
+
+    return ESP_OK;
 }
 
 esp_err_t UsSensor::deinit()
@@ -63,7 +87,10 @@ Reading UsSensor::read_distance(uint8_t ping_count)
             ESP_LOGD(TAG, "Ping %d failed: result=%d", i, static_cast<int>(pings[i].result));
         }
 
-        // Note: inter-ping delay (cfg_.ping_interval_ms) is applied inside UsDriver::ping_once()
+        // Apply inter-ping delay between pings, but not after the last ping
+        if (i < ping_count - 1 && cfg_.ping_interval_ms > 0) {
+            freertos_hal_.task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms));
+        }
     }
 
     // Delegate processing (including logical error refinement) to the processor

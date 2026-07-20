@@ -8,6 +8,24 @@ This document provides a comprehensive reference for the public API of the `ultr
 
 The primary interface for the ultrasonic sensor orchestrator.
 
+### UsSensor
+
+The concrete implementation of `IUsSensor`.
+
+#### Constructor
+```cpp
+UsSensor(
+    idf_hals::IGpioHAL& gpio_hal,
+    idf_hals::ITimerHAL& timer_hal,
+    idf_hals::ISysRomHAL& sys_rom_hal,
+    idf_hals::IHalFreertos& freertos_hal,
+    gpio_num_t trigger_pin,
+    gpio_num_t echo_pin,
+    const UsConfig& config
+);
+```
+Constructs the sensor orchestrator by injecting the concrete references of all the underlying target HALs.
+
 #### `esp_err_t init()`
 Initializes the ultrasonic sensor component. Configures the necessary GPIOs and prepares the sensor for measurements.
 * **Returns:**

@@ -1,9 +1,15 @@
+// components/ultrasonic_sensor/host_test/test_us_sensor/main/test_us_sensor.cpp
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "esp_err.h"
 
 #include "i_us_driver.hpp"
+#include "mock_hal_freertos.hpp"
+#include "mock_hal_gpio.hpp"
+#include "mock_hal_timer.hpp"
+#include "mock_hal_sys_rom.hpp"
 #include "us_processor.hpp"
 #include "us_sensor.hpp"
 #include "us_types.hpp"
@@ -15,7 +21,7 @@ using ::testing::Return;
 class MockUsDriver : public IUsDriver
 {
 public:
-    MOCK_METHOD(esp_err_t, init, (uint16_t warmup_time_ms), (override));
+    MOCK_METHOD(esp_err_t, init, (), (override));
     MOCK_METHOD(esp_err_t, deinit, (), (override));
     MOCK_METHOD(Reading, ping_once, (const UsConfig &cfg), (override));
 };
@@ -37,11 +43,12 @@ protected:
     {
         driver = std::make_shared<MockUsDriver>();
         processor = std::make_shared<MockUsProcessor>();
-        sensor = std::make_unique<UsSensor>(cfg_, driver, processor);
+        sensor = std::make_unique<UsSensor>(cfg_, driver, processor, freertos_hal);
     }
 
     std::shared_ptr<MockUsDriver> driver;
     std::shared_ptr<MockUsProcessor> processor;
+    idf_hals::MockHalFreertos freertos_hal;
     std::unique_ptr<UsSensor> sensor;
     UsConfig cfg_;
 
@@ -60,6 +67,7 @@ TEST_F(UsSensorTest, VerifySpecificConfigField)
     Reading processed_reading = {UsResult::OK, 15.0f};
 
     EXPECT_CALL(*driver, ping_once(Field(&UsConfig::timeout_us, cfg_.timeout_us))).WillOnce(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(_)).Times(0);
 
     EXPECT_CALL(*processor, process(_, 1, Field(&UsConfig::filter, cfg_.filter)))
         .WillOnce(Return(processed_reading));
@@ -74,7 +82,8 @@ TEST_F(UsSensorTest, VerifySpecificConfigField)
 
 TEST_F(UsSensorTest, InitCallsDriverInit)
 {
-    EXPECT_CALL(*driver, init(cfg_.warmup_time_ms)).WillOnce(Return(ESP_OK));
+    EXPECT_CALL(*driver, init()).WillOnce(Return(ESP_OK));
+    EXPECT_CALL(freertos_hal, task_delay(pdMS_TO_TICKS(cfg_.warmup_time_ms))).Times(1);
     ASSERT_EQ(sensor->init(), ESP_OK);
 }
 
@@ -94,6 +103,7 @@ TEST_F(UsSensorTest, ReadingHappyPath)
     Reading processed_reading = {UsResult::OK, 10.0f};
 
     EXPECT_CALL(*driver, ping_once(_)).WillOnce(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(_)).Times(0);
     EXPECT_CALL(*processor, process(_, 1, _)).WillOnce(Return(processed_reading));
 
     auto result = sensor->read_distance(1);
@@ -106,6 +116,7 @@ TEST_F(UsSensorTest, ReadingMultiplesPings)
     Reading processed_reading = {UsResult::OK, 10.0f};
 
     EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms))).Times(9);
     EXPECT_CALL(*processor, process(_, 10, _)).WillOnce(Return(processed_reading));
 
     auto result = sensor->read_distance(10);
@@ -117,14 +128,20 @@ TEST_F(UsSensorTest, ReadingClampingPingCount)
     Reading driver_reading = {UsResult::OK, 10.0f};
     Reading processed_reading = {UsResult::OK, 10.0f};
 
-    EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
+    // For 0 (clamped to 1)
+    EXPECT_CALL(*driver, ping_once(_)).WillOnce(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(_)).Times(0);
     EXPECT_CALL(*processor, process(_, 1, _)).WillOnce(Return(processed_reading));
 
     auto result = sensor->read_distance(0);
     ASSERT_EQ(result, processed_reading);
 
+    // For MAX_PINGS+1 (clamped to 15)
+    EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms))).Times(14);
     EXPECT_CALL(*processor, process(_, IUsProcessor::MAX_PINGS, _))
         .WillOnce(Return(processed_reading));
+
     result = sensor->read_distance(IUsProcessor::MAX_PINGS + 1);
     ASSERT_EQ(result, processed_reading);
 }
@@ -135,6 +152,7 @@ TEST_F(UsSensorTest, ECHO_STUCK_HW_FAULT_Failure)
     Reading processed_reading = {UsResult::ECHO_STUCK, 0.0f};
 
     EXPECT_CALL(*driver, ping_once(_)).WillOnce(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(_)).Times(0);
 
     auto result = sensor->read_distance(1);
     ASSERT_EQ(result, processed_reading);
@@ -143,6 +161,7 @@ TEST_F(UsSensorTest, ECHO_STUCK_HW_FAULT_Failure)
     processed_reading = {UsResult::HW_FAULT, 0.0f};
 
     EXPECT_CALL(*driver, ping_once(_)).WillOnce(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(_)).Times(0);
 
     result = sensor->read_distance(1);
     ASSERT_EQ(result, processed_reading);
@@ -155,6 +174,7 @@ TEST_F(UsSensorTest, LogicalFailuresPassedToProcessor)
     Reading processed_reading = {UsResult::OUT_OF_RANGE, 0.0f};
 
     EXPECT_CALL(*driver, ping_once(_)).WillOnce(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(_)).Times(0);
     EXPECT_CALL(*processor, process(_, 1, _)).WillOnce(Return(processed_reading));
 
     auto result = sensor->read_distance(1);
@@ -165,6 +185,7 @@ TEST_F(UsSensorTest, LogicalFailuresPassedToProcessor)
     processed_reading = {UsResult::TIMEOUT, 0.0f};
 
     EXPECT_CALL(*driver, ping_once(_)).WillOnce(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(_)).Times(0);
     EXPECT_CALL(*processor, process(_, 1, _)).WillOnce(Return(processed_reading));
 
     result = sensor->read_distance(1);
@@ -175,12 +196,13 @@ TEST_F(UsSensorTest, IntegrationWithRealProcessor_OutOfRange)
 {
     // Use real processor to verify the fix
     auto real_processor = std::make_shared<UsProcessor>();
-    UsSensor sensor_int(cfg_, driver, real_processor);
+    UsSensor sensor_int(cfg_, driver, real_processor, freertos_hal);
 
     Reading driver_reading = {UsResult::OUT_OF_RANGE, 0.0f};
 
     // Majority of pings fail with OUT_OF_RANGE
     EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms))).Times(4);
 
     auto result = sensor_int.read_distance(5);
     ASSERT_EQ(result.result, UsResult::OUT_OF_RANGE);
@@ -189,11 +211,12 @@ TEST_F(UsSensorTest, IntegrationWithRealProcessor_OutOfRange)
 TEST_F(UsSensorTest, IntegrationWithRealProcessor_Timeout)
 {
     auto real_processor = std::make_shared<UsProcessor>();
-    UsSensor sensor_int(cfg_, driver, real_processor);
+    UsSensor sensor_int(cfg_, driver, real_processor, freertos_hal);
 
     Reading driver_reading = {UsResult::TIMEOUT, 0.0f};
 
     EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
+    EXPECT_CALL(freertos_hal, task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms))).Times(4);
 
     auto result = sensor_int.read_distance(5);
     ASSERT_EQ(result.result, UsResult::TIMEOUT);
@@ -202,6 +225,10 @@ TEST_F(UsSensorTest, IntegrationWithRealProcessor_Timeout)
 TEST(UsSensorIntegrationTest, FactoryConstructorCreatesRealObjects)
 {
     UsConfig cfg;
-    UsSensor sensor(GPIO_NUM_4, GPIO_NUM_5, cfg);
+    idf_hals::MockGpioHAL gpio;
+    idf_hals::MockTimerHAL timer;
+    idf_hals::MockSysRomHAL sys_rom;
+    idf_hals::MockHalFreertos freertos;
+    UsSensor sensor(gpio, timer, sys_rom, freertos, GPIO_NUM_4, GPIO_NUM_5, cfg);
     EXPECT_TRUE(true);
 }

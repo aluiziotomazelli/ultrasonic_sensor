@@ -1,4 +1,8 @@
+// components/ultrasonic_sensor/src/us_driver.cpp
+
 #include "us_driver.hpp"
+
+#include <cstdint>
 
 #define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
@@ -8,26 +12,27 @@ namespace ultrasonic {
 static const char *TAG = "UsDriver";
 
 UsDriver::UsDriver(
-    std::shared_ptr<IGpioHAL> gpio_hal,
-    std::shared_ptr<ITimerHAL> timer_hal,
+    idf_hals::IGpioHAL &gpio_hal,
+    idf_hals::ITimerHAL &timer_hal,
+    idf_hals::ISysRomHAL &sys_rom_hal,
     gpio_num_t trig_pin,
     gpio_num_t echo_pin)
     : gpio_hal_(gpio_hal)
     , timer_hal_(timer_hal)
+    , sys_rom_hal_(sys_rom_hal)
     , trig_pin_(trig_pin)
     , echo_pin_(echo_pin)
 {
 }
 
-esp_err_t UsDriver::init(uint16_t warmup_time_ms)
+esp_err_t UsDriver::init()
 {
     ESP_LOGD(TAG, "Initializing UsDriver: TRIG=%d, ECHO=%d", trig_pin_, echo_pin_);
 
     esp_err_t ret;
 
     // Configure TRIG pin as output
-
-    ret = gpio_hal_->reset_pin(trig_pin_);
+    ret = gpio_hal_.reset_pin(trig_pin_);
     if (ret != ESP_OK)
         return ret;
 
@@ -38,16 +43,16 @@ esp_err_t UsDriver::init(uint16_t warmup_time_ms)
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
-    ret = gpio_hal_->config(trig_conf);
+    ret = gpio_hal_.config(&trig_conf);
     if (ret != ESP_OK)
         return ret;
 
-    ret = gpio_hal_->set_level(trig_pin_, 0);
+    ret = gpio_hal_.set_level(trig_pin_, 0);
     if (ret != ESP_OK)
         return ret;
 
     // Configure ECHO pin as input
-    ret = gpio_hal_->reset_pin(echo_pin_);
+    ret = gpio_hal_.reset_pin(echo_pin_);
     if (ret != ESP_OK)
         return ret;
 
@@ -58,26 +63,18 @@ esp_err_t UsDriver::init(uint16_t warmup_time_ms)
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
-    ret = gpio_hal_->config(echo_conf);
+    ret = gpio_hal_.config(&echo_conf);
     if (ret != ESP_OK)
         return ret;
 
     // Pulse echo low to clear any residual state
-    ret = gpio_hal_->set_direction(echo_pin_, GPIO_MODE_OUTPUT);
+    ret = gpio_hal_.set_direction(echo_pin_, GPIO_MODE_OUTPUT);
     if (ret != ESP_OK)
         return ret;
 
-    ret = gpio_hal_->set_level(echo_pin_, 0);
+    ret = gpio_hal_.set_level(echo_pin_, 0);
     if (ret != ESP_OK)
         return ret;
-
-    // Warmup: wait for the sensor to stabilize before the first ping
-    if (warmup_time_ms > 0) {
-        ESP_LOGD(TAG, "Warming up for %d ms", warmup_time_ms);
-        ret = timer_hal_->delay_ms(warmup_time_ms);
-        if (ret != ESP_OK)
-            return ret;
-    }
 
     return ESP_OK;
 }
@@ -87,17 +84,17 @@ esp_err_t UsDriver::deinit()
     // Reset pins to a safe state
     esp_err_t ret;
 
-    ret = gpio_hal_->set_level(trig_pin_, 0);
+    ret = gpio_hal_.set_level(trig_pin_, 0);
     if (ret != ESP_OK)
         return ret;
-    ret = gpio_hal_->reset_pin(trig_pin_);
+    ret = gpio_hal_.reset_pin(trig_pin_);
     if (ret != ESP_OK)
         return ret;
 
-    ret = gpio_hal_->set_level(echo_pin_, 0);
+    ret = gpio_hal_.set_level(echo_pin_, 0);
     if (ret != ESP_OK)
         return ret;
-    ret = gpio_hal_->reset_pin(echo_pin_);
+    ret = gpio_hal_.reset_pin(echo_pin_);
     if (ret != ESP_OK)
         return ret;
 
@@ -107,13 +104,13 @@ esp_err_t UsDriver::deinit()
 Reading UsDriver::ping_once(const UsConfig &cfg)
 {
     // 1. Prepare: set ECHO as output low to clear residual state
-    if (gpio_hal_->set_direction(echo_pin_, GPIO_MODE_OUTPUT) != ESP_OK)
+    if (gpio_hal_.set_direction(echo_pin_, GPIO_MODE_OUTPUT) != ESP_OK)
         return {UsResult::HW_FAULT, 0.0f};
-    if (gpio_hal_->set_level(echo_pin_, 0) != ESP_OK)
+    if (gpio_hal_.set_level(echo_pin_, 0) != ESP_OK)
         return {UsResult::HW_FAULT, 0.0f};
 
     // 2. Switch ECHO to input for measurement
-    if (gpio_hal_->set_direction(echo_pin_, GPIO_MODE_INPUT) != ESP_OK)
+    if (gpio_hal_.set_direction(echo_pin_, GPIO_MODE_INPUT) != ESP_OK)
         return {UsResult::HW_FAULT, 0.0f};
 
     // 3. Check if ECHO is stuck HIGH before triggering
@@ -148,71 +145,64 @@ Reading UsDriver::ping_once(const UsConfig &cfg)
         return {UsResult::OUT_OF_RANGE, 0.0f};
     }
 
-    // Inter-ping delay: applied after every ping so the sensor can reset.
-    // The orchestrator does not need to know about timing.
-    if (cfg.ping_interval_ms > 0) {
-        timer_hal_->delay_ms(cfg.ping_interval_ms);
-    }
-
     return {UsResult::OK, cm};
 }
 
 bool UsDriver::is_echo_stuck()
 {
-    bool level = false;
-    if (gpio_hal_->get_level(echo_pin_, level) != ESP_OK)
-        return false; // HAL error will be caught in trigger phase
-    return level;
+    return gpio_hal_.get_level(echo_pin_) != 0;
 }
 
 esp_err_t UsDriver::trigger(uint16_t pulse_duration_us)
 {
     esp_err_t ret;
 
-    ret = gpio_hal_->set_level(trig_pin_, 1);
+    ret = gpio_hal_.set_level(trig_pin_, 1);
     if (ret != ESP_OK)
         return ret;
 
-    ret = timer_hal_->delay_us(pulse_duration_us);
-    if (ret != ESP_OK)
-        return ret;
+    sys_rom_hal_.delay_us(pulse_duration_us);
 
-    ret = gpio_hal_->set_level(trig_pin_, 0);
+    ret = gpio_hal_.set_level(trig_pin_, 0);
     return ret;
 }
 
 esp_err_t UsDriver::wait_rising_edge(uint32_t timeout_us)
 {
-    uint64_t start = timer_hal_->get_now_us();
-    bool level = false;
+    int64_t start = timer_hal_.get_time_us();
+    int level = 0;
 
     do {
-        esp_err_t ret = gpio_hal_->get_level(echo_pin_, level);
-        if (ret != ESP_OK)
-            return ret;
+        level = gpio_hal_.get_level(echo_pin_);
+        int64_t now = timer_hal_.get_time_us();
 
-        if (timer_hal_->get_now_us() - start > timeout_us)
+        if (level != 0) {
+            return ESP_OK;
+        }
+
+        if (now - start > timeout_us)
             return ESP_ERR_TIMEOUT;
-    } while (!level);
-
-    return ESP_OK;
+    } while (true);
 }
 
 esp_err_t UsDriver::measure_pulse(uint32_t timeout_us, uint32_t &duration_us)
 {
-    uint64_t echo_start = timer_hal_->get_now_us();
-    bool level = true;
+    int64_t echo_start = timer_hal_.get_time_us();
+    int level = 1;
 
     do {
-        esp_err_t ret = gpio_hal_->get_level(echo_pin_, level);
-        if (ret != ESP_OK)
-            return ret;
+        level = gpio_hal_.get_level(echo_pin_);
+        int64_t now = timer_hal_.get_time_us();
 
-        if (timer_hal_->get_now_us() - echo_start > timeout_us)
+        if (level == 0) {
+            break;
+        }
+
+        if (now - echo_start > timeout_us)
             return ESP_ERR_TIMEOUT;
-    } while (level);
+    } while (true);
 
-    uint64_t echo_end = timer_hal_->get_now_us();
+    int64_t echo_end = timer_hal_.get_time_us();
     duration_us = static_cast<uint32_t>(echo_end - echo_start);
     return ESP_OK;
 }

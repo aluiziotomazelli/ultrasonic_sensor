@@ -18,7 +18,7 @@ public:
     virtual ~IUsDriver() = default;
 
     /** @internal */
-    virtual esp_err_t init(uint16_t warmup_time_ms = 0) = 0;
+    virtual esp_err_t init() = 0;
 
     /** @internal */
     virtual esp_err_t deinit() = 0;

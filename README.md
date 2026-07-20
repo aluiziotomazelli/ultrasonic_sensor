@@ -45,21 +45,32 @@ The project follows solid design principles to ensure maintainability and testab
     - Applies median/cluster algorithms
     - Error detection and refinement
   - HAL: Hardware Abstraction Layer
-    - `IGpioHAL`, `ITimerHAL` interfaces
-    - Default implementations are inlined for maximum efficiency
-    - Enables testing without hardware via dependency injection
+    - Replaced custom local HALs with the globally shared `idf_hals` submodule.
+    - Interfaces (`IGpioHAL`, `ITimerHAL`, `ISysRomHAL`, `IHalFreertos`) are injected via constructors.
+    - Enables mock-based testing without hardware.
 
 
 ## Usage
 
 ```cpp
 #include "us_sensor.hpp"
+#include "hal_gpio.hpp"
+#include "hal_timer.hpp"
+#include "hal_sys_rom.hpp"
+#include "hal_freertos.hpp"
 
 using namespace ultrasonic;
 
-// Initialize with Echo and Trigger pins
+// Instantiate the concrete HAL implementations
+idf_hals::GpioHAL gpio;
+idf_hals::TimerHAL timer;
+idf_hals::SysRomHAL sys_rom;
+idf_hals::HalFreertos freertos;
+
 UsConfig cfg = {}; // Use default settings
-UsSensor sensor(GPIO_NUM_4, GPIO_NUM_5, cfg);
+
+// Initialize with HAL references, Echo and Trigger pins, and config
+UsSensor sensor(gpio, timer, sys_rom, freertos, GPIO_NUM_4, GPIO_NUM_5, cfg);
 
 sensor.init();
 

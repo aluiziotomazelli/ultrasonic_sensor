@@ -4,6 +4,7 @@ idf_component_register(
         "test_us_sensor.cpp"
     INCLUDE_DIRS 
         "."
+        "../../../../idf_hals/mocks"
     REQUIRES 
         gtest
         ultrasonic_sensor

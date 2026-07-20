@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-# Inclui o componente ultrasonic_sensor localizado dois níveis acima
-list(APPEND EXTRA_COMPONENT_DIRS "../../")
+list(APPEND EXTRA_COMPONENT_DIRS "../../" "../../../")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(basic_usage_example)

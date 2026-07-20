@@ -1,11 +1,10 @@
 #pragma once
 
-#include <memory>
-
 #include "esp_err.h"
 #include "i_us_driver.hpp"
-#include "i_us_gpio_hal.hpp"
-#include "i_us_timer_hal.hpp"
+#include "interfaces/i_hal_gpio.hpp"
+#include "interfaces/i_hal_timer.hpp"
+#include "interfaces/i_hal_sys_rom.hpp"
 
 namespace ultrasonic {
 
@@ -24,15 +23,16 @@ public:
 
     /** @internal */
     UsDriver(
-        std::shared_ptr<IGpioHAL> gpio_hal,
-        std::shared_ptr<ITimerHAL> timer_hal,
+        idf_hals::IGpioHAL &gpio_hal,
+        idf_hals::ITimerHAL &timer_hal,
+        idf_hals::ISysRomHAL &sys_rom_hal,
         gpio_num_t trig_pin,
         gpio_num_t echo_pin);
 
     ~UsDriver() override = default;
 
     /** @copydoc IUsDriver::init() */
-    esp_err_t init(uint16_t warmup_time_ms = 0) override;
+    esp_err_t init() override;
 
     /** @copydoc IUsDriver::deinit() */
     esp_err_t deinit() override;
@@ -54,9 +54,11 @@ private:
     esp_err_t measure_pulse(uint32_t timeout_us, uint32_t &duration_us);
 
     /** @internal */
-    std::shared_ptr<IGpioHAL> gpio_hal_;
+    idf_hals::IGpioHAL &gpio_hal_;
     /** @internal */
-    std::shared_ptr<ITimerHAL> timer_hal_;
+    idf_hals::ITimerHAL &timer_hal_;
+    /** @internal */
+    idf_hals::ISysRomHAL &sys_rom_hal_;
 
     /** @internal */
     gpio_num_t trig_pin_;

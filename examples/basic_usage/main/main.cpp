@@ -1,8 +1,13 @@
+// components/ultrasonic_sensor/examples/basic_usage/main/main.cpp
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "us_sensor.hpp"
+#include "hal_gpio.hpp"
+#include "hal_timer.hpp"
+#include "hal_sys_rom.hpp"
+#include "hal_freertos.hpp"
 
 /**
  * Tag for ESP-IDF logs
@@ -70,9 +75,17 @@ extern "C" void app_main(void)
     };
 
     /**
-     * Instantiate the UsSensor component passing the pins and configuration
+     * Instantiate the concrete HAL implementations
      */
-    UsSensor sensor(TRIGER_GPIO, ECHO_GPIO, us_cfg);
+    idf_hals::GpioHAL gpio;
+    idf_hals::TimerHAL timer;
+    idf_hals::SysRomHAL sys_rom;
+    idf_hals::HalFreertos freertos;
+
+    /**
+     * Instantiate the UsSensor component passing the HALs, pins and configuration
+     */
+    UsSensor sensor(gpio, timer, sys_rom, freertos, TRIGER_GPIO, ECHO_GPIO, us_cfg);
 
     /**
      * Initialize the sensor (configure GPIOs, etc.)
