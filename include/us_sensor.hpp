@@ -89,7 +89,7 @@ private:
     idf_hals::IHalFreertos &freertos_hal_;
 
     /** @internal */
-    static constexpr uint8_t MAX_PINGS = 15;
+    static constexpr uint8_t MAX_PINGS = 32;
 };
 
 } // namespace ultrasonic

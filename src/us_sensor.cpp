@@ -72,19 +72,27 @@ Reading UsSensor::read_distance(uint8_t ping_count)
     }
 
     Reading pings[MAX_PINGS];
-    char log_buf[128] = "";
+    // TODO: Temporary log for testing signal stability. 
+    // Can/should be removed or changed to ESP_LOGD / ESP_LOGV later to save memory and processing.
+    char log_buf[512] = "";
     int offset = 0;
 
     for (uint8_t i = 0; i < ping_count; i++) {
         pings[i] = driver_->ping_once(cfg_);
 
-        offset += snprintf(
-            log_buf + offset,
-            sizeof(log_buf) - offset,
-            "%.1f-%d%s",
-            pings[i].cm,
-            static_cast<int>(pings[i].result),
-            (i == ping_count - 1) ? "" : ", ");
+        if (offset < sizeof(log_buf)) {
+            int written = snprintf(
+                log_buf + offset,
+                sizeof(log_buf) - offset,
+                "%.1f-%d%s",
+                pings[i].cm,
+                static_cast<int>(pings[i].result),
+                (i == ping_count - 1) ? "" : ", ");
+            
+            if (written > 0) {
+                offset += written;
+            }
+        }
 
         // Hardware failures abort the loop immediately — application must act
         if (pings[i].result == UsResult::ECHO_STUCK || pings[i].result == UsResult::HW_FAULT) {
