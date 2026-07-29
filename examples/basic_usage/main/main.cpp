@@ -22,7 +22,7 @@ static const char *TAG = "ULTRASONIC_EXAMPLE";
 
 /**
  * Initial number of pings per measurement
- * Note: The maximum limit defined in the component is MAX_PINGS = 15
+ * Note: The maximum limit defined in the component is MAX_PINGS = 32
  */
 #define PINGS_PER_MEASURE 7
 

@@ -6,6 +6,11 @@
 namespace ultrasonic {
 
 /**
+ * @brief Maximum number of pings allowed per measurement cycle.
+ */
+constexpr uint8_t MAX_PINGS = 32;
+
+/**
  * @brief Unified result type for all ultrasonic sensor operations.
  */
 enum class UsResult

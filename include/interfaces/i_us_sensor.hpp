@@ -47,7 +47,7 @@ public:
      * This method triggers the sensor multiple times, collects the results, and
      * processes them using the configured statistical filter.
      *
-     * @param ping_count Number of pings to attempt (limited by IUsProcessor::MAX_PINGS).
+     * @param ping_count Number of pings to attempt (limited by ultrasonic::MAX_PINGS).
      *
      * @return Reading structure containing the unified UsResult and the filtered
      *         distance in centimeters.

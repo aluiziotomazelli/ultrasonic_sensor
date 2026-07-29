@@ -136,13 +136,13 @@ TEST_F(UsSensorTest, ReadingClampingPingCount)
     auto result = sensor->read_distance(0);
     ASSERT_EQ(result, processed_reading);
 
-    // For MAX_PINGS+1 (clamped to 15)
+    // For MAX_PINGS+1 (clamped to MAX_PINGS)
     EXPECT_CALL(*driver, ping_once(_)).WillRepeatedly(Return(driver_reading));
-    EXPECT_CALL(freertos_hal, task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms))).Times(14);
-    EXPECT_CALL(*processor, process(_, IUsProcessor::MAX_PINGS, _))
+    EXPECT_CALL(freertos_hal, task_delay(pdMS_TO_TICKS(cfg_.ping_interval_ms))).Times(MAX_PINGS - 1);
+    EXPECT_CALL(*processor, process(_, MAX_PINGS, _))
         .WillOnce(Return(processed_reading));
 
-    result = sensor->read_distance(IUsProcessor::MAX_PINGS + 1);
+    result = sensor->read_distance(MAX_PINGS + 1);
     ASSERT_EQ(result, processed_reading);
 }
 

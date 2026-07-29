@@ -41,7 +41,7 @@ Deinitializes the ultrasonic sensor component. Releases resources and resets GPI
 #### `Reading read_distance(uint8_t ping_count)`
 Performs a distance measurement using multiple pings and applies statistical filtering.
 * **Parameters:**
-    * `ping_count`: Number of pings to attempt (limited by `IUsProcessor::MAX_PINGS`, usually 15).
+    * `ping_count`: Number of pings to attempt (limited by `MAX_PINGS`, usually up to 32).
 * **Returns:**
     * A `Reading` structure containing the unified `UsResult` and the filtered distance.
 

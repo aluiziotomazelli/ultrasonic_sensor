@@ -14,9 +14,6 @@ namespace ultrasonic {
 class IUsProcessor
 {
 public:
-    /** @internal */
-    static constexpr uint8_t MAX_PINGS = 15;
-
     virtual ~IUsProcessor() = default;
 
     /** @internal */
