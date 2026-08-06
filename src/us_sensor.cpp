@@ -63,6 +63,29 @@ esp_err_t UsSensor::deinit()
     return driver_->deinit();
 }
 
+struct PingLogBuffer {
+    char data[256];
+};
+
+static PingLogBuffer format_pings(const Reading *pings, uint8_t count)
+{
+    PingLogBuffer buf = {};
+    int offset = 0;
+    for (uint8_t i = 0; i < count; i++) {
+        int written = snprintf(
+            buf.data + offset,
+            sizeof(buf.data) - offset,
+            "%.1f-%d%s",
+            pings[i].cm,
+            static_cast<int>(pings[i].result),
+            (i == count - 1) ? "" : ", ");
+        if (written > 0 && static_cast<size_t>(offset + written) < sizeof(buf.data)) {
+            offset += written;
+        }
+    }
+    return buf;
+}
+
 Reading UsSensor::read_distance(uint8_t ping_count)
 {
     // Clamp ping_count to valid range
@@ -72,32 +95,16 @@ Reading UsSensor::read_distance(uint8_t ping_count)
     }
 
     Reading pings[MAX_PINGS];
-    // TODO: Temporary log for testing signal stability. 
-    // Can/should be removed or changed to ESP_LOGD / ESP_LOGV later to save memory and processing.
-    char log_buf[512] = "";
-    int offset = 0;
+    uint8_t actual_pings = 0;
 
     for (uint8_t i = 0; i < ping_count; i++) {
         pings[i] = driver_->ping_once(cfg_);
-
-        if (offset < sizeof(log_buf)) {
-            int written = snprintf(
-                log_buf + offset,
-                sizeof(log_buf) - offset,
-                "%.1f-%d%s",
-                pings[i].cm,
-                static_cast<int>(pings[i].result),
-                (i == ping_count - 1) ? "" : ", ");
-            
-            if (written > 0) {
-                offset += written;
-            }
-        }
+        actual_pings++;
 
         // Hardware failures abort the loop immediately — application must act
         if (pings[i].result == UsResult::ECHO_STUCK || pings[i].result == UsResult::HW_FAULT) {
             ESP_LOGE(TAG, "Hardware failure on ping %d: %d — aborting", i, static_cast<int>(pings[i].result));
-            ESP_LOGI(TAG, "UsSensor: %s (aborted)", log_buf);
+            ESP_LOGD(TAG, "UsSensor: %s (aborted)", format_pings(pings, actual_pings).data);
             return pings[i];
         }
 
@@ -112,7 +119,7 @@ Reading UsSensor::read_distance(uint8_t ping_count)
         }
     }
 
-    ESP_LOGI(TAG, "%s", log_buf);
+    ESP_LOGD(TAG, "Pings [%u]: %s", actual_pings, format_pings(pings, actual_pings).data);
 
     // Delegate processing (including logical error refinement) to the processor
     return processor_->process(pings, ping_count, cfg_);
